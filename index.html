@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>Mercator Projection</title>
+<title>LOD3</title>
 <style>
 
 path {
@@ -13,11 +13,43 @@ path {
 <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script>
 
-d3.json("readme.json", function(collection) {
+// load the IATI numbers:
+var iati = d3.csv("iati.csv", function(d) {
+  	return {
+    	country: d.country,
+    	usd: +d.usd // convert "usd" column to number
+  	};
+}, function(error, rows) {
+  	console.log(rows);
+  	setScale();
+});
+
+function setScale(){
+
+	console.log(iati);
+
+	var iatiMin = d3.min(d3.values(iati.usd));
+	var iatiMax = d3.max(d3.values(iati.usd));
+
+	console.log(d3.values(iati.usd));
+
+	console.log(iatiMin);
+	console.log(iatiMax);
+
+}
+
+// TBD: set up the scale for the choropleth map:
+var color = d3.scale.linear()
+    .domain([-1, 0, 1])
+    .range(["red", "white", "green"]);
+
+// load the world.json and show it
+d3.json("world.json", function(collection) {
   d3.select("svg").selectAll("path")
-      .data(collection.features)
-    .enter().append("path")
-      .attr("d", d3.geo.path().projection(d3.geo.mercator()));
+    .data(collection.features)
+    .enter()
+    .append("path")
+    .attr("d", d3.geo.path().projection(d3.geo.mercator()));
 });
 
 </script>
