@@ -2,12 +2,8 @@
 <meta charset="utf-8">
 <style>
 
-.countries {
-  fill: none;
-}
-
 .country:hover{
-  stroke: black;
+  stroke: darkgrey;
 }
 
 </style>
@@ -21,9 +17,8 @@
 
 var transferByCountry = d3.map();
 
-var scale = d3.scale.linear()
-    .domain([-41275976, 0, 1620401280])
-    .range(["red", "grey", "green"]);
+// we'll set the domain and range once we have loaded the csv
+var scale = d3.scale.linear();
 
 // Map width and height
 var width = 1100,
@@ -52,8 +47,11 @@ queue()
 
 function ready(error, world) {
 
-  console.log(d3.max(d3.values(transferByCountry)));
-  console.log(d3.min(d3.values(transferByCountry)));
+  // now that we have loaded the csv, we can dynamically set 
+  // the domain and range for the scale
+  // depending on the min and max values of the dataset
+  scale.domain([d3.min(d3.values(transferByCountry)), 0, d3.max(d3.values(transferByCountry))])
+    .range(["red", "grey", "green"]);
 
 	svg.append("g")
     	.attr("class", "countries")
