@@ -6,10 +6,8 @@
   fill: none;
 }
 
-.states {
-  fill: #ccc;
-  stroke: #000;
-  stroke-linejoin: round;
+.country:hover{
+  stroke: black;
 }
 
 </style>
@@ -25,19 +23,19 @@ var transferByCountry = d3.map();
 
 var scale = d3.scale.linear()
     .domain([-41275976, 0, 1620401280])
-    .range(["red", "white", "green"]);
+    .range(["red", "grey", "green"]);
 
 // Map width and height
 var width = 1100,
-    height = 400;
+    height = 700;
 
 //Define map projection
 var projection = d3.geo.mercator()
   .rotate([0,0])   // [lon,lat]
-  .center([70,30]) // [lon,lat]
+  .center([70,40]) // [lon,lat]
   .translate([width/2, height/2])
   .precision(0.1)
-  .scale([250]);
+  .scale([400]);
 
 //Define path generator
 var path = d3.geo.path()
@@ -71,6 +69,7 @@ function ready(error, world) {
           return scale(transferByCountry.get(d.id));
     		}      		 
     	})
+      .attr("class", "country")
     	.attr("d", path);
 }
 
