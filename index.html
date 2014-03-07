@@ -21,10 +21,10 @@
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script>
 
-var rateById = d3.map();
+var transferByCountry = d3.map();
 
 var scale = d3.scale.linear()
-    .domain([-1000000000, 0, 1000000000])
+    .domain([-41275976, 0, 1620401280])
     .range(["red", "white", "green"]);
 
 // Map width and height
@@ -49,10 +49,14 @@ var svg = d3.select("body").append("svg")
 
 queue()
   .defer(d3.json, "world.json")
-  .defer(d3.csv, "iati.csv", function(d) { rateById.set(d.country, +d.usd); })
+  .defer(d3.csv, "iati.csv", function(d) { transferByCountry.set(d.country, +d.usd); })
   .await(ready);
 
 function ready(error, world) {
+
+  console.log(d3.max(d3.values(transferByCountry)));
+  console.log(d3.min(d3.values(transferByCountry)));
+
 	svg.append("g")
     	.attr("class", "countries")
     	.selectAll("path")
@@ -61,10 +65,10 @@ function ready(error, world) {
     	.append("path")
     	.attr("fill", function(d) {         
 
-    		if(rateById.get(d.id) == undefined){
+    		if(transferByCountry.get(d.id) == undefined){
     			return "rgb(222,222,222)"; // countries without values are grey
     		} else {
-          return scale(rateById.get(d.id));
+          return scale(transferByCountry.get(d.id));
     		}      		 
     	})
     	.attr("d", path);
