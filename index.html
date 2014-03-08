@@ -16,6 +16,7 @@
 <script>
 
 var transferByCountry = d3.map();
+var refugeesFromCountry = d3.map();
 
 // we'll set the domain and range once we have loaded the csv
 var scale = d3.scale.linear();
@@ -42,17 +43,31 @@ var svg = d3.select("body").append("svg")
 
 queue()
   .defer(d3.json, "world.json")
-  .defer(d3.csv, "iati.csv", function(d) { transferByCountry.set(d.country, +d.usd); })
+  .defer(d3.csv, "iati.csv", function(d) { 
+        transferByCountry.set(d.country, +d.usd); })
+  .defer(d3.csv, "refugees.csv", function(d) { 
+        refugeesFromCountry.set(d.fromCode, d.toCode, +d.refugees); })
   .await(ready);
 
 function ready(error, world) {
 
-  // now that we have loaded the csv, we can dynamically set 
+  // now that we have loaded the iati csv, we can dynamically set 
   // the domain and range for the scale
   // depending on the min and max values of the dataset
   scale.domain([d3.min(d3.values(transferByCountry)), 0, d3.max(d3.values(transferByCountry))])
     .range(["red", "grey", "green"]);
 
+  // show the unhcr data
+//  svg.append("g")
+//      .attr("class", "refugees")
+//      .selectAll("path")
+//      .data(refugeesFromCountry, function(d) {
+//        d.fromCode;
+//      })
+//      .enter()
+//      .append("path");
+
+  // show the iati data
 	svg.append("g")
     	.attr("class", "countries")
     	.selectAll("path")
