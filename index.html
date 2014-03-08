@@ -15,6 +15,7 @@
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script>
 
+var centroids = d3.map();
 var transferByCountry = d3.map();
 var refugeesFromCountry = d3.map();
 
@@ -68,30 +69,34 @@ function ready(error, world) {
 //      .append("path");
 
   // show the iati data
-	svg.append("g")
-    	.attr("class", "countries")
-    	.selectAll("path")
-      	.data(topojson.feature(world, world.objects.countries).features)
-    	.enter()
-    	.append("path")
-    	.attr("fill", function(d) {         
+    svg.append("g")
+        .attr("class", "countries")
+        .selectAll("path")
+        .data(topojson.feature(world, world.objects.countries).features)
+        .enter()
+        .append("path")
+        .attr("fill", function(d) {                     
 
-    		if(transferByCountry.get(d.id) == undefined){
-    			return "rgb(222,222,222)"; // countries without values are grey
-    		} else {
-          return scale(transferByCountry.get(d.id));
-    		}      		 
-    	})
-      .attr("class", "country")
-    	.attr("d", path)
-      .append("svg:title")
-      .text(function(d) {
+            // while we are going through the features, let's store the centroids 
+            // in a separate d3.map:            
+            centroids.set(d.id, path.centroid(d))
 
-        if(transferByCountry.get(d.id) == undefined){
-          return d.id+": No data for 2012"; // countries without values are grey
-        } else {
-          return d.id+": "+transferByCountry.get(d.id)+" USD";
-        }
+            if(transferByCountry.get(d.id) == undefined){
+                return "rgb(222,222,222)"; // countries without values are grey
+            } else {
+                return scale(transferByCountry.get(d.id));
+            }                        
+
+        })
+        .attr("class", "country")
+        .attr("d", path)
+        .append("svg:title")
+        .text(function(d) {
+            if(transferByCountry.get(d.id) == undefined){
+              return d.id+": No data for 2012"; // countries without values are grey
+            } else {
+              return d.id+": "+transferByCountry.get(d.id)+" USD";
+            }
       });
 }
 
