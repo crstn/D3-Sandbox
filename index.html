@@ -68,7 +68,16 @@ function ready(error, world) {
     		}      		 
     	})
       .attr("class", "country")
-    	.attr("d", path);
+    	.attr("d", path)
+      .append("svg:title")
+      .text(function(d) {
+
+        if(transferByCountry.get(d.id) == undefined){
+          return d.id+": No data for 2012"; // countries without values are grey
+        } else {
+          return d.id+": "+transferByCountry.get(d.id)+" USD";
+        }
+      });
 }
 
 </script>
