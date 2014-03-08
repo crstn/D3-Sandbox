@@ -44,10 +44,10 @@ var svg = d3.select("body").append("svg")
 
 queue()
   .defer(d3.json, "world.json")
+  .defer(d3.csv, "refugees.csv", function(d) {
+        refugeesFromCountry.set(d.fromCode, [d.toCode, +d.refugees]); })
   .defer(d3.csv, "iati.csv", function(d) { 
         transferByCountry.set(d.country, +d.usd); })
-  .defer(d3.csv, "refugees.csv", function(d) { 
-        refugeesFromCountry.set(d.fromCode, d.toCode, +d.refugees); })
   .await(ready);
 
 function ready(error, world) {
@@ -58,17 +58,18 @@ function ready(error, world) {
   scale.domain([d3.min(d3.values(transferByCountry)), 0, d3.max(d3.values(transferByCountry))])
     .range(["red", "grey", "green"]);
 
-  // show the unhcr data
-//  svg.append("g")
-//      .attr("class", "refugees")
-//      .selectAll("path")
-//      .data(refugeesFromCountry, function(d) {
-//        d.fromCode;
-//      })
-//      .enter()
-//      .append("path");
+    console.log(refugeesFromCountry);
+    console.log(transferByCountry);
 
-  // show the iati data
+    d3.select("body")
+        .append("ul")
+        .selectAll("li")
+        .data(refugeesFromCountry)
+        .enter()
+        .append("li")
+        .text(function(d) { return d.key; });
+  
+    // show the iati data
     svg.append("g")
         .attr("class", "countries")
         .selectAll("path")
