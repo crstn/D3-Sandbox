@@ -45,7 +45,7 @@ var svg = d3.select("body").append("svg")
 queue()
   .defer(d3.json, "world.json")
   .defer(d3.csv, "refugees.csv", function(d) {
-        refugeesFromCountry.set(d.fromCode, [d.toCode, +d.refugees]); })
+        refugeesFromCountry.set(d.fromCode+"-"+d.toCode, +d.refugees); })
   .defer(d3.csv, "iati.csv", function(d) { 
         transferByCountry.set(d.country, +d.usd); })
   .await(ready);
@@ -64,7 +64,7 @@ function ready(error, world) {
     d3.select("body")
         .append("ul")
         .selectAll("li")
-        .data(refugeesFromCountry)
+        .data(d3.entries(refugeesFromCountry))
         .enter()
         .append("li")
         .text(function(d) { return d.key; });
