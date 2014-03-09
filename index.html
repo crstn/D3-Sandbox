@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
+.arc{ 
+  stroke: black;
+  stroke-width: 1px ;
+  opacity: .5   }
 
-.country:hover{
-  stroke: darkgrey;
-}
+.country:hover{  
+  fill: darkgrey;      }
+
+.graticule {
+  fill: none;
+  stroke: #777;
+  stroke-width: .5px;
+  stroke-opacity: .5;  }
 
 </style>
 
@@ -13,11 +22,13 @@
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/queue.v1.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
+
 <script>
 
 var centroids = d3.map();
-var transferByCountry = d3.map();
 var refugeesFromCountry = d3.map();
+
+var graticule = d3.geo.graticule();
 
 // we'll set the domain and range once we have loaded the csv
 var scale = d3.scale.linear();
@@ -29,10 +40,17 @@ var width = 1100,
 //Define map projection
 var projection = d3.geo.mercator()
   .rotate([0,0])   // [lon,lat]
-  .center([0,0]) // [lon,lat]
+  .center([0,25]) // [lon,lat]
   .translate([width/2, height/2])
   .precision(0.1)
-  .scale([150]);
+  .scale([200]);
+
+// Define an "unprojected" projection
+// to compute the centroids in unprojected coordinates.
+// (see https://github.com/mbostock/d3/issues/951)
+// Required to draw great arcs between the centroids.
+var identity = d3.geo.path()
+  .projection({stream: function(d) { return d; }})
 
 //Define path generator
 var path = d3.geo.path()
@@ -49,19 +67,11 @@ queue()
   .defer(d3.json, "world.json")
   .defer(d3.csv, "refugees.csv", function(d) {
         refugeesFromCountry.set(d.fromCode, [d.fromCode, d.toCode, +d.refugees]); })
-  .defer(d3.csv, "iati.csv", function(d) { 
-        transferByCountry.set(d.country, +d.usd); })
   .await(ready);
 
-function ready(error, world) {
-
-  // now that we have loaded the iati csv, we can dynamically set 
-  // the domain and range for the scale
-  // depending on the min and max values of the dataset
-  scale.domain([d3.min(d3.values(transferByCountry)), 0, d3.max(d3.values(transferByCountry))])
-    .range(["red", "grey", "green"]);
-
-    // show the iati data
+function ready(error, world) {    
+ 
+    // base map
     g.append("g")
         .attr("class", "countries")
         .selectAll("path")
@@ -71,26 +81,17 @@ function ready(error, world) {
         .attr("fill", function(d) {                     
 
             // while we are going through the features, let's store the centroids 
-            // in a separate d3.map:            
-            centroids.set(d.id, path.centroid(d))
+            // of the UNPROJECTED coordinates in a separate d3.map:            
+            centroids.set(d.id, identity.centroid(d))
 
-            if(transferByCountry.get(d.id) == undefined){
-                return "rgb(222,222,222)"; // countries without values are grey
-            } else {
-                return scale(transferByCountry.get(d.id));
-            }                        
+            return "rgb(222,222,222)"; // countries without values are grey
+                                    
 
         })
         .attr("class", "country")
         .attr("d", path)
         .append("svg:title")
-        .text(function(d) {
-            if(transferByCountry.get(d.id) == undefined){
-              return d.id+": No data for 2012"; // countries without values are grey
-            } else {
-              return d.id+": "+transferByCountry.get(d.id)+" USD";
-            }
-      });
+        .text(function(d) { return d.id; });
 
       //show the unhcr data
 
@@ -103,50 +104,32 @@ function ready(error, world) {
         links.push({
              type: "LineString",
              coordinates: [
-                 [ centroids.get(start) ],
-                 [ centroids.get(end) ]
+                 centroids.get(start), 
+                 centroids.get(end)
              ]
          });
       }
 
-      console.log(links);
+      // graticule on top:
+      svg.append("path")
+        .datum(graticule)
+        .attr("class", "graticule")
+        .attr("d", path);
 
       
-       // Standard enter / update 
+       // draw refugee flows
       g.append("g")
         .attr("class", "flows")
         .selectAll(".arc")
-        .data(d3.values(links))
+        .data(links)
         .enter()
         .append("path")
         .attr({
           "class": "arc" })
         .attr({ "fill": "none" })
-        .attr({
-            //d is the points attribute for this path, we'll draw
-            //  an arc between the points using the arc function
-            "d": function(d){
-                return "M"+d.coordinates;
-            }
-        })
-        .style({
-            "stroke": "#0000ff",
-            "stroke-width": "1px" });
-            
-
-        //exit
-//        pathArcs.exit().remove();
-
-//      svg.append("g")
-//        .attr("class", "flows")
-//        .selectAll("path")
-//        .data(d3.entries(refugeesFromCountry))
-//        .enter()
-//        .append("path")
-//        //.attr("d", "yadda") //TBD
-//        .append("svg:title")
-//        .text(function(d) { return d.key } );
-  
+        .attr("d", path);
+        
+              
 }
 
 </script>
