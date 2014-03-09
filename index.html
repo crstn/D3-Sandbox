@@ -29,23 +29,26 @@ var width = 1100,
 //Define map projection
 var projection = d3.geo.mercator()
   .rotate([0,0])   // [lon,lat]
-  .center([70,40]) // [lon,lat]
+  .center([0,0]) // [lon,lat]
   .translate([width/2, height/2])
   .precision(0.1)
-  .scale([400]);
+  .scale([150]);
 
 //Define path generator
 var path = d3.geo.path()
   .projection(projection);
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("body")
+  .append("svg")
   .attr("width", width)
   .attr("height", height);
+
+var g = svg.append("g");
 
 queue()
   .defer(d3.json, "world.json")
   .defer(d3.csv, "refugees.csv", function(d) {
-        refugeesFromCountry.set(d.fromCode+"-"+d.toCode, +d.refugees); })
+        refugeesFromCountry.set(d.fromCode, [d.fromCode, d.toCode, +d.refugees]); })
   .defer(d3.csv, "iati.csv", function(d) { 
         transferByCountry.set(d.country, +d.usd); })
   .await(ready);
@@ -58,19 +61,8 @@ function ready(error, world) {
   scale.domain([d3.min(d3.values(transferByCountry)), 0, d3.max(d3.values(transferByCountry))])
     .range(["red", "grey", "green"]);
 
-    console.log(refugeesFromCountry);
-    console.log(transferByCountry);
-
-    d3.select("body")
-        .append("ul")
-        .selectAll("li")
-        .data(d3.entries(refugeesFromCountry))
-        .enter()
-        .append("li")
-        .text(function(d) { return d.key; });
-  
     // show the iati data
-    svg.append("g")
+    g.append("g")
         .attr("class", "countries")
         .selectAll("path")
         .data(topojson.feature(world, world.objects.countries).features)
@@ -99,6 +91,62 @@ function ready(error, world) {
               return d.id+": "+transferByCountry.get(d.id)+" USD";
             }
       });
+
+      //show the unhcr data
+
+      links = [];
+      var refs = d3.entries(refugeesFromCountry);
+      for (id in refs){
+        var start = refs[id]["value"][0];
+        var end   = refs[id]["value"][1];
+
+        links.push({
+             type: "LineString",
+             coordinates: [
+                 [ centroids.get(start) ],
+                 [ centroids.get(end) ]
+             ]
+         });
+      }
+
+      console.log(links);
+
+      
+       // Standard enter / update 
+      g.append("g")
+        .attr("class", "flows")
+        .selectAll(".arc")
+        .data(d3.values(links))
+        .enter()
+        .append("path")
+        .attr({
+          "class": "arc" })
+        .attr({ "fill": "none" })
+        .attr({
+            //d is the points attribute for this path, we'll draw
+            //  an arc between the points using the arc function
+            "d": function(d){
+                return "M"+d.coordinates;
+            }
+        })
+        .style({
+            "stroke": "#0000ff",
+            "stroke-width": "1px" });
+            
+
+        //exit
+//        pathArcs.exit().remove();
+
+//      svg.append("g")
+//        .attr("class", "flows")
+//        .selectAll("path")
+//        .data(d3.entries(refugeesFromCountry))
+//        .enter()
+//        .append("path")
+//        //.attr("d", "yadda") //TBD
+//        .append("svg:title")
+//        .text(function(d) { return d.key } );
+  
 }
 
 </script>
